@@ -9,6 +9,7 @@ from Constant import *
 class QTable:
     def __init__(self, name='policy'):
         self.name = name
+        self.number_of_games = 0
         self.policy = {}
         self.my_lr = .5
         self.max = 1.0
@@ -26,18 +27,18 @@ class QTable:
         if self.max != 0 or mx != 0:
             self.max = mx
             with open('Checkpoint/' + self.name + '.ql', 'wb') as f:
-                pickle.dump([self.policy, self.my_lr, self.max, self.epsilon], f)
-            print('++++++++++++++++  Save {}.ql  = {}  , lose={:.2%}  , epsilon={:,}'.
-                  format(self.name, len(self.policy), self.max, self.epsilon))
+                pickle.dump([self.policy, self.my_lr, self.max, self.epsilon, self.number_of_games], f)
+            print('Save {}.ql  = {:,}, lose={:.2%}, epsilon={:,}, number of Games: {:,}'.
+                  format(self.name, len(self.policy), self.max, self.epsilon, self.number_of_games))
 
     def load(self):
         try:
             with open('Checkpoint/' + self.name + '.ql', 'rb') as f:
-                self.policy, self.my_lr, self.max, self.epsilon = pickle.load(f)
-            print('++++++++++++++++  Load {}.ql  = {}  , lose={:.2%}  , epsilon={:,}'.
-                  format(self.name, len(self.policy), self.max, self.epsilon))
+                self.policy, self.my_lr, self.max, self.epsilon, self.number_of_games = pickle.load(f)
+            print('\x1b[38;2;0;255;0mLoad {}.ql  = {:,}, lose={:.2%}, epsilon={:,}, number of Games: {:,}\x1b[0m'.
+                  format(self.name, len(self.policy), self.max, self.epsilon,self.number_of_games))
         except:
-            print('!!!!!!!!!!!!!!!! {}.ql not load'.format(self.name))
+            print('\x1b[38;2;255;120;40m{}.ql not load!!!\x1b[0m'.format(self.name))
 
     def agent(self, game):
         valid_moves = [col for col in range(game.columns) if game.board[0][col] == 0]
@@ -54,6 +55,7 @@ class QTable:
 
     def replay(self, tie, game, player):
         if self.max > 0:
+            self.number_of_games += 1
             new_state, action, reward = self.buffer.pop()
             if tie:
                 reward = .2
@@ -195,8 +197,8 @@ class QNeural:
                 'epsilon': self.epsilon,
                 'game': self.number_of_games,
                 'max': self.max}, 'Checkpoint/' + self.name + '.ai')
-            print('++++++++++++++++  Save {}.ai  =  {} , lose={:.2%} , epsilon ={}, number of Games: {:,}'.
-                  format(self.name, self.my_lr, self.max, self.epsilon,self.number_of_games))
+            print('\x1b[38;2;0;255;0mSave {}.ai  =  {}, lose={:.2%}, epsilon ={}, number of Games: {:,}\x1b[0m'.
+                  format(self.name, self.my_lr, self.max, self.epsilon, self.number_of_games))
 
     def load(self):
         try:
@@ -206,10 +208,10 @@ class QNeural:
             self.epsilon = checkpoint['epsilon']
             self.number_of_games = checkpoint['game']
             self.max = checkpoint['max']
-            print('load {}.ai  =  {} , lose={:.2%} , epsilon ={}, number of Games: {:,}'.
-                  format(self.name, self.my_lr, self.max, self.epsilon,self.number_of_games))
+            print('\x1b[38;2;0;255;0mload {}.ai  =  {} , lose={:.2%} , epsilon ={}, number of Games: {:,}\x1b[0m'.
+                  format(self.name, self.my_lr, self.max, self.epsilon, self.number_of_games))
         except:
-            print('{}.ai not load'.format(self.name))
+            print('\x1b[38;2;255;120;40m{}.ai not load!!!'.format(self.name))
 
     def reset(self):
         self.win = 0
