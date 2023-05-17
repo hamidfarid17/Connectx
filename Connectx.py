@@ -191,13 +191,12 @@ def play_n_game(players, p1, p2, num, num_s, N, dly, ui):
 
         if i % n == n - 1:
             t2 = time.time()
-            print('\r{:2}/{:2}-p{:3.0%} time:{:13}'.
-                  format(num + 1, num_s, (i + 1) / N, change_time(t2 - tm)), end='  ***  ')
-            print('{:10}:{:4.2%}, {:10}:{:4.2%}, Tie:{:4.2%}'.
-                  format(players[p1].name, (pl[0]) / (i + 1), players[p2].name, (pl[1]) / (i + 1),
-                         (pl[2]) / (i + 1)), end='')
+            print('\r\x1b[38;2;255;33;40m{:2}/{:2}-p{:3.0%} time= {:13}  ***  {:10}:{:4.2%}, {:10}:{:4.2%}, '
+                  'Tie:{:4.2%}\x1b[0m'.format(num + 1, num_s, (i + 1) / N, change_time(t2 - tm), players[p1].name,
+                                              (pl[0]) / (i + 1), players[p2].name, (pl[1]) / (i + 1),
+                                              (pl[2]) / (i + 1)), end='')
 
-    print('\r{:2}/{:2}-full time:{:13}  ***  {:20}:{:4.2%}, {:20}:{:4.2%}, Tie:{:4.2%}'.
+    print('\r\x1b[7;32;40m{:2}/{:2}-full time= {:13}  ***  {:20}:{:4.2%}, {:20}:{:4.2%}, Tie:{:4.2%}\x1b[0m'.
           format(num + 1, num_s, change_time(time.time() - tm),
                  players[p1].name, pl[0] / N, players[p2].name, pl[1] / N, pl[2] / N))
 
@@ -211,17 +210,20 @@ def play(player, num, N, sweep=True, rst=True, league=True, dly=0, ui=True):
         for n, (i, j) in enumerate(MP_list):
             play_n_game(player, i, j, n, len(MP_list), N, dly, ui)
         dd = 'Game {:d}'.format(nn - num)
-        print('////////////////////////////////////////{:^15}////////////////////////////////////////'.format(dd))
+        print(
+            '\x1b[7;37;40m////////////////////////////////////////{:^15}////////////////////////////////////////\x1b[0m'.format(
+                dd))
         new_team = sorted(player, key=attrgetter('point', 'win', 'tie'), reverse=True)
 
         for i in new_team:
-            print('/////{:20} match:{:6}  point:{:1.2f}  win:{:6d}  lose:{:6d}  Tie:{:6d}   /////'.
+            print('\x1b[7;37;40m/////{:20} match:{:6}  point:{:1.2f}  win:{:6d}  lose:{:6d}  Tie:{:6d}   /////\x1b[0m'.
                   format(i.name, i.match,
                          i.point / i.match,
                          i.win,
                          i.lose,
                          i.tie))
-        print('///////////////////////////////////////////////////////////////////////////////////////////////')
+        print(
+            '\x1b[7;37;40m///////////////////////////////////////////////////////////////////////////////////////////////\x1b[0m')
         for i in player:
             i.save()
             if rst:

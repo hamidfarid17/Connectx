@@ -1,3 +1,4 @@
+import os
 import random
 
 import torch
@@ -12,6 +13,8 @@ LR = .1
 device = torch.device("cpu")
 AI_GAMMA = .99
 RANDOM = True
+
+os.environ['SDL_VIDEO_WINDOW_POS'] = "1200,200"
 
 def MP_League_export(number, sweep=True):
     l = list(range(0, number))
@@ -73,11 +76,11 @@ def change_time(t):
     tt = t
     if tt > 3600:
         m = t // 3600
-        s = '{:d}h:'.format(int(m))
+        s = '{:02d}:'.format(int(m))
         tt -= m * 3600
     if tt > 60:
         m = tt // 60
-        s += '{:d}m:'.format(int(m))
+        s += '{:02d}:'.format(int(m))
         tt -= m * 60
-    s += '{:.2f}s'.format(tt)
+    s += '{:02d}'.format(int(tt))
     return s
