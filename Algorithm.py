@@ -82,15 +82,17 @@ class Random:
 
 
 class Reaction:
-    """ Skill 1: Finds a move that leads to victory, otherwise it does a random move
-        Skill 2: Finds a move that leads to victory,
+    """ Skill 0: Finds a move that leads to victory, otherwise it does a random move
+        Skill 1: Finds a move that leads to victory,
                  otherwise finds a move that prevents the opponent from winning,
                  and otherwise makes a random move.
     """
 
     def __init__(self, name='Reaction', skill=None):
-        if skill is None or 1 > skill > 2:
-            self.skill = 2
+        if skill is None:
+            self.skill = 1
+        elif skill < 0:
+            self.skill = 0
         else:
             self.skill = skill
         self.name = name + '_' + str(self.skill)
@@ -107,13 +109,14 @@ class Reaction:
             win, _ = game.check_player_win(board, game.current_player)
             if win:
                 return i
-        player = [i + 1 for i in range(game.n_players) if i + 1 != game.current_player]
-        for j in player:
-            for i in valid_moves:
-                board = game.drop_piece(game.board, i, j)
-                win, _ = game.check_player_win(board, j)
-                if win:
-                    return i
+        if self.skill > 0:
+            player = [i + 1 for i in range(game.n_players) if i + 1 != game.current_player]
+            for j in player:
+                for i in valid_moves:
+                    board = game.drop_piece(game.board, i, j)
+                    win, _ = game.check_player_win(board, j)
+                    if win:
+                        return i
 
         return random.choice(valid_moves)
 
@@ -152,8 +155,7 @@ class MinMax:
 
     def agent(self, game):
         valid_moves = [col for col in range(game.columns) if game.board[0][col] == 0]
-        _, mv = minmax(game, game.current_player, game.current_player, valid_moves,
-                       0 if len(valid_moves) == game.columns else self.skill)
+        _, mv = minmax(game, game.board, game.current_player, game.current_player, valid_moves, self.skill)
         return random.choice(mv)
 
     def replay(self, tie, game, player):
@@ -176,46 +178,49 @@ class MinMax:
         pass
 
 
-def check_rew(board, r):
-    for row in range(3):
-        if board[row * 3 + 0] == board[row * 3 + 1] == board[row * 3 + 2] and board[row * 3] != 0:
-            return r
-    for col in range(3):
-        if board[0 + col] == board[3 + col] == board[6 + col] and board[col] != 0:
-            return r
-    if board[0] == board[4] == board[8] and board[0] != 0:
-        return r
-    if board[2] == board[4] == board[6] and board[2] != 0:
-        return r
-    jj = [i for i in range(9) if board[i] == 0]
-    if len(jj) == 0:
-        return .5
-    return 0
+def minmax(game, board, my_turn, new_turn, action_list, deep):
+    r = 1 if my_turn == new_turn else -1
+    if len(action_list)==0:
+        return 0, None
+    cr, mv = check_reward(game, board, action_list, new_turn, r)
+    if cr==0 and deep!=0:
+        mm = []
+        for col in mv:
+            b = game.drop_piece(board, col, new_turn)
+            valid_moves = [col for col in range(game.columns) if b[0][col] == 0]
+            cr, _ = minmax(game, b, my_turn, 3-new_turn, valid_moves, deep-1)
+            mm.append(cr)
+        cr= max(mm)
+        mv= [mv[j] for j in range(len(mm)) if mm[j] == max(mm)]
+
+    return cr*r, mv
 
 
-def minmax(game, my_turn, new_turn, action_list, deep):
-    mm = []
-    nt = []
-    nn = []
-    r = 1 if my_turn == new_turn else 2
-    for i in action_list:
-        b = game.drop_piece(game.board, i, new_turn)
-        cr = game.check_player_win(b, r)
-        if not cr and deep != 0:
-            ac_list = [j for j in range(game.columns) if game.board[0][j] == 0]
-            cr, _ = minmax(b, my_turn, 1 - new_turn, ac_list, deep - 1)
-        mm.append(cr)
-        nt.append(i)
+def check_reward(game, board, action_list, turn, r):
+    cr = []
+    for col in action_list:
+        b = game.drop_piece(board, col, turn)
+        cp, _ = game.check_player_win(b, turn)
+        cr.append(cp * 1)
+    # print(board)
+    # print('cr=',cr)
+    # print('al=',action_list)
+    mx = max(cr)
+    if mx == 0:
+        cr = []
+        turn = 3 - turn
+        for col in action_list:
+            b = game.drop_piece(board, col, turn)
+            cp, _ = game.check_player_win(b, turn)
+            cr.append(cp * 1)
+            mx = max(cr) * -1
 
-    if my_turn == new_turn:
-        mx = max(mm)
-        for j in range(len(mm)):
-            if mm[j] == mx:
-                nn.append(nt[j])
-        return mx, nn
-    else:
-        mx = min(mm)
-        for j in range(len(mm)):
-            if mm[j] == mx:
-                nn.append(nt[j])
-        return mx, nn
+    return mx, [action_list[j] for j in range(len(cr)) if cr[j] == max(cr)]
+
+#     for i in valid_moves:
+#         board = game.drop_piece(game.board, i, j)
+#         win, _ = game.check_player_win(board, j)
+#         if win:
+#             return i
+#
+# return random.choice(valid_moves)
